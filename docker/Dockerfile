@@ -4,7 +4,7 @@ FROM golang:1.21 AS builder
 ENV GO111MODULE=on
 
 # Set the working directory inside the container
-WORKDIR /freakathon
+WORKDIR /freakathon-backend
 
 # Copy the Go mod and sum files
 COPY go.mod ./
@@ -18,18 +18,14 @@ COPY . .
 
 # Build the Go app
 RUN --mount=type=cache,target=/root/.cache/go-build \
-    go build -o backend ./cmd/main.go
+    go build -v -o ./backend ./cmd/main.go
 # Start a new stage from scratch
 FROM debian:latest
 
-# Set the working directory inside the container
-WORKDIR /freakathon-backend
+COPY --from=builder /freakathon-backend/backend /backend
 
-# Copy the compiled binary from the builder stage
-COPY --from=builder /freakathon/backend .
-
-# Expose port 8080 to the outside world
+# Expose port 8090 to the outside world
 EXPOSE 8090
 
 # Command to run the executable
-CMD ["./backend", "serve"]
+CMD ["/backend", "serve", "--http=0.0.0.0:8090"]
