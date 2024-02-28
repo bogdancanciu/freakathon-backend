@@ -1,7 +1,5 @@
 #Database logs
-/pb_data/logs.db
-/pb_data/logs.db-shm
-/pb_data/logs.db-wal
+pb_data
 
 #IDE related files
 .idea
