@@ -5,5 +5,7 @@ services:
     build:
       context: ./
       dockerfile: docker/Dockerfile
+    volumes:
+      - ./pb_data:/pb_data
     ports:
       - "8090:8090"
