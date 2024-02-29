@@ -19,7 +19,7 @@ func main() {
 		return nil
 	})
 
-	app.OnBeforeServe().Add(handlers.Register(app))
+	handlers.BindRegisterHooks(app)
 
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
