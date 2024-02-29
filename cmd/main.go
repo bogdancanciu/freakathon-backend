@@ -1,9 +1,8 @@
 package main
 
 import (
-	"github.com/labstack/echo/v5"
+	"github.com/bogdancanciu/frekathon-backend/handlers"
 	"log"
-	"net/http"
 	"os"
 
 	"github.com/pocketbase/pocketbase"
@@ -20,15 +19,7 @@ func main() {
 		return nil
 	})
 
-	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
-		e.Router.GET("/hello/:name", func(c echo.Context) error {
-			name := c.PathParam("name")
-
-			return c.JSON(http.StatusOK, map[string]string{"message": "Hello " + name})
-		} /* optional middlewares */)
-
-		return nil
-	})
+	app.OnBeforeServe().Add(handlers.Register(app))
 
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
