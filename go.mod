@@ -2,11 +2,15 @@ module github.com/bogdancanciu/frekathon-backend
 
 go 1.21
 
-require github.com/pocketbase/pocketbase v0.21.2
+require (
+	github.com/Pallinder/go-randomdata v1.2.0
+	github.com/golang-jwt/jwt/v4 v4.5.0
+	github.com/pocketbase/pocketbase v0.21.2
+	github.com/stretchr/testify v1.8.2
+)
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7 // indirect
-	github.com/Pallinder/go-randomdata v1.2.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/aws/aws-sdk-go v1.50.2 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.24.1 // indirect
@@ -28,6 +32,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.21.7 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.26.7 // indirect
 	github.com/aws/smithy-go v1.19.0 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/disintegration/imaging v1.6.2 // indirect
 	github.com/domodwyer/mailyak/v3 v3.6.2 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
@@ -36,7 +41,6 @@ require (
 	github.com/ganigeorgiev/fexpr v0.4.0 // indirect
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
-	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/uuid v1.6.0 // indirect
@@ -50,6 +54,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-sqlite3 v1.14.19 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/pocketbase/dbx v1.10.1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/spf13/cast v1.6.0 // indirect
@@ -76,6 +81,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240123012728-ef4313101c80 // indirect
 	google.golang.org/grpc v1.61.0 // indirect
 	google.golang.org/protobuf v1.32.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	lukechampine.com/uint128 v1.3.0 // indirect
 	modernc.org/cc/v3 v3.41.0 // indirect
 	modernc.org/ccgo/v3 v3.16.15 // indirect
