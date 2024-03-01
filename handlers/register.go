@@ -11,21 +11,14 @@ import (
 )
 
 func BindRegisterHooks(app core.App) {
-	app.OnRecordAfterCreateRequest().Add(func(e *core.RecordCreateEvent) error {
-		if isUserCollection(e.Collection) {
-			setNewTag(e.Record)
-			if err := app.Dao().SaveRecord(e.Record); err != nil {
-				return err
-			}
-			return nil
+	app.OnRecordAfterCreateRequest("users").Add(func(e *core.RecordCreateEvent) error {
+		setNewTag(e.Record)
+		if err := app.Dao().SaveRecord(e.Record); err != nil {
+			return err
 		}
-
 		return nil
-	})
-}
 
-func isUserCollection(c *models.Collection) bool {
-	return c.Name == "users"
+	})
 }
 
 func setNewTag(r *models.Record) {

@@ -20,6 +20,7 @@ func main() {
 	})
 
 	handlers.BindRegisterHooks(app)
+	handlers.BindEventsHooks(app)
 
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
