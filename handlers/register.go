@@ -4,9 +4,11 @@ import (
 	"crypto/rand"
 	"fmt"
 	"github.com/Pallinder/go-randomdata"
+	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/models"
 	"math/big"
+	"net/http"
 	"strings"
 )
 
@@ -15,6 +17,21 @@ func BindRegisterHooks(app core.App) {
 		setNewTag(e.Record)
 		if err := app.Dao().SaveRecord(e.Record); err != nil {
 			return err
+		}
+		friendsCollection, err := app.Dao().FindCollectionByNameOrId("friends")
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Server error", "")
+		}
+
+		record := models.NewRecord(friendsCollection)
+
+		record.Set("user_id", e.Record.Id)
+		record.Set("friend_list", []Friend{})
+		record.Set("pending_list", []Friend{})
+		record.Set("sent_invites", []Friend{})
+
+		if err := app.Dao().SaveRecord(record); err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Server error", "")
 		}
 		return nil
 
