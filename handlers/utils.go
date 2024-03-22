@@ -54,7 +54,7 @@ func validateSessionToken(sessionToken string) *apis.ApiError {
 	return nil
 }
 
-func userIdFromSession(sessionToken string) (string, *apis.ApiError) {
+func UserIdFromSession(sessionToken string) (string, *apis.ApiError) {
 	err := validateSessionToken(sessionToken)
 	if err != nil {
 		return "", err

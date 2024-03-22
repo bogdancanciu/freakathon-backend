@@ -45,7 +45,7 @@ func TestUserIdFromSession(t *testing.T) {
 	t.Run("should return malformed token error when token doesn't embed an ID", func(t *testing.T) {
 		token := testJWT(t, jwt.MapClaims{}, 10)
 
-		_, err := userIdFromSession(token)
+		_, err := UserIdFromSession(token)
 		assert.Error(t, err)
 		assert.Equal(t, errMalformedToken, err.Message)
 	})
@@ -54,7 +54,7 @@ func TestUserIdFromSession(t *testing.T) {
 		claims := jwt.MapClaims{"id": "test_id"}
 		token := testJWT(t, claims, 10)
 
-		userId, err := userIdFromSession(token)
+		userId, err := UserIdFromSession(token)
 		assert.Nil(t, err)
 		assert.Equal(t, claims["id"], userId)
 	})

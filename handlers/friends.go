@@ -24,7 +24,7 @@ func AddFriend(app core.App) func(e *core.ServeEvent) error {
 	return func(e *core.ServeEvent) error {
 		e.Router.POST("/api/friends/:friend_id", func(c echo.Context) error {
 			session := getSessionToken(c.Request())
-			userId, sessionErr := userIdFromSession(session)
+			userId, sessionErr := UserIdFromSession(session)
 			if sessionErr != nil {
 				return sessionErr
 			}
@@ -49,7 +49,7 @@ func AcceptFriend(app core.App) func(e *core.ServeEvent) error {
 	return func(e *core.ServeEvent) error {
 		e.Router.PUT("/api/friends/:friend_id", func(c echo.Context) error {
 			session := getSessionToken(c.Request())
-			userId, sessionErr := userIdFromSession(session)
+			userId, sessionErr := UserIdFromSession(session)
 			if sessionErr != nil {
 				return sessionErr
 			}
