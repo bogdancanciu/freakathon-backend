@@ -4,11 +4,22 @@ import (
 	"errors"
 	"github.com/bogdancanciu/frekathon-backend/handlers"
 	"github.com/pocketbase/pocketbase/apis"
+	"github.com/pocketbase/pocketbase/core"
 	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
 )
+
+type sender struct {
+	senderId string
+	groupId  string
+}
+
+type storeMessage struct {
+	Sender  sender `json:"sender"`
+	Message string `json:"message"`
+}
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -19,7 +30,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
+func ServeWs(app core.App, hub *Hub, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
@@ -32,6 +43,13 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		conn.Close()
 		return
 	}
+
+	record, err := app.Dao().FindFirstRecordByData("messages", "user_id", "e4eymnms6hoyb69")
+	if err != nil {
+		log.Println("error while finding rec")
+	}
+
+	log.Println(record.Get("messages"))
 
 	userId, err := handlers.UserIdFromSession(string(sessionToken))
 	if !errors.Is(err, (*apis.ApiError)(nil)) {

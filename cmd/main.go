@@ -21,7 +21,7 @@ func main() {
 			w := c.Response().Writer
 			if r.URL.Path == "/ws" {
 				// Handle WebSocket upgrade
-				protocol.ServeWs(hub, w, r)
+				protocol.ServeWs(app, hub, w, r)
 				return nil
 			}
 			return next(c)

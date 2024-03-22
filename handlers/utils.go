@@ -4,6 +4,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"github.com/pocketbase/pocketbase/apis"
+	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/models"
 	"net/http"
 	"strings"
 	"time"
@@ -70,4 +72,25 @@ func UserIdFromSession(sessionToken string) (string, *apis.ApiError) {
 	}
 
 	return userId, nil
+}
+
+func createChat(app core.App, participants []string, chatType, description string) (string, *apis.ApiError) {
+	var chatId string
+	chatsCollection, err := app.Dao().FindCollectionByNameOrId("chats")
+	if err != nil {
+		return chatId, apis.NewApiError(http.StatusInternalServerError, "Server error", "")
+	}
+
+	record := models.NewRecord(chatsCollection)
+
+	record.Set("participants", participants)
+	record.Set("type", chatType)
+	record.Set("description", description)
+
+	if err := app.Dao().SaveRecord(record); err != nil {
+		return chatId, apis.NewApiError(http.StatusInternalServerError, "Server error", "")
+	}
+
+	chatId = record.Id
+	return chatId, nil
 }
