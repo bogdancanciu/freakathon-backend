@@ -44,12 +44,12 @@ func ServeWs(app core.App, hub *Hub, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	record, err := app.Dao().FindFirstRecordByData("messages", "user_id", "e4eymnms6hoyb69")
-	if err != nil {
-		log.Println("error while finding rec")
-	}
-
-	log.Println(record.Get("messages"))
+	//record, err := app.Dao().FindFirstRecordByData("messages", "user_id", "e4eymnms6hoyb69")
+	//if err != nil {
+	//	log.Println("error while finding rec")
+	//}
+	//
+	//log.Println(record.Get("messages"))
 
 	userId, err := handlers.UserIdFromSession(string(sessionToken))
 	if !errors.Is(err, (*apis.ApiError)(nil)) {
@@ -58,9 +58,16 @@ func ServeWs(app core.App, hub *Hub, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println(userId)
+	userRecord, err := app.Dao().FindFirstRecordByData("users", "id", userId)
+	if err != nil {
+		log.Println("error finding user record", err)
+		conn.Close()
+		return
+	}
 
-	client := &Client{id: userId, hub: hub, conn: conn, send: make(chan []byte, 256)}
+	chatUser := newChatUser(userId, userRecord.GetString("name"), userRecord.GetString("tag"))
+
+	client := &Client{chatUser: chatUser, hub: hub, conn: conn, send: make(chan []byte, 256)}
 	client.hub.register <- client
 
 	go client.writePump()

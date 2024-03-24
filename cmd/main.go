@@ -11,7 +11,7 @@ import (
 
 func main() {
 	app := pocketbase.New()
-	hub := protocol.NewHub()
+	hub := protocol.NewHub(app)
 	go hub.Run()
 
 	// Define the middleware function to handle WebSocket upgrade

@@ -16,16 +16,31 @@ const (
 )
 
 type socketMessage struct {
-	Sender   string `json:"sender"`
-	Receiver string `json:"receiver"`
-	Content  string `json:"message"`
+	ChatId    string `json:"chat_id"`
+	Sender    string `json:"sender"`
+	Content   string `json:"message"`
+	Timestamp int64  `json:"timestamp"`
+}
+
+type chatUser struct {
+	id   string
+	name string
+	tag  string
+}
+
+func newChatUser(id, name, tag string) *chatUser {
+	return &chatUser{id: id, name: name, tag: tag}
 }
 
 type Client struct {
-	id   string
-	hub  *Hub
-	conn *websocket.Conn
-	send chan []byte
+	chatUser *chatUser
+	hub      *Hub
+	conn     *websocket.Conn
+	send     chan []byte
+}
+
+func (c *Client) ID() string {
+	return c.chatUser.id
 }
 
 func (c *Client) readPump() {
@@ -52,7 +67,8 @@ func (c *Client) readPump() {
 			continue
 		}
 
-		msg.Sender = c.id
+		msg.Sender = c.chatUser.id
+		msg.Timestamp = time.Now().Unix()
 
 		c.hub.broadcast <- msg
 	}
