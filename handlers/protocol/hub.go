@@ -49,9 +49,10 @@ func (h *Hub) Run() {
 				h.clients[client.ID()].send <- message
 			}
 
-			messageRecord.Set("messages", [][]byte{})
-			if err := h.app.Dao().SaveRecord(messageRecord); err != nil {
+			err = h.removePendingMessages(messageRecord)
+			if err != nil {
 				log.Println("Failed to remove pending messages", err)
+				continue
 			}
 		case client := <-h.unregister:
 			if _, ok := h.clients[client.ID()]; ok {
@@ -102,6 +103,15 @@ func (h *Hub) Run() {
 
 		}
 	}
+}
+
+func (h *Hub) removePendingMessages(pmRecord *models.Record) error {
+	pmRecord.Set("messages", [][]byte{})
+	if err := h.app.Dao().SaveRecord(pmRecord); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (h *Hub) marshalSocketMessage(message socketMessage, chatRecord *models.Record) ([]byte, error) {
