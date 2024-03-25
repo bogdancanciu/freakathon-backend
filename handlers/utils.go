@@ -6,6 +6,7 @@ import (
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/models"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -93,4 +94,16 @@ func createChat(app core.App, participants []string, chatType, description strin
 
 	chatId = record.Id
 	return chatId, nil
+}
+
+func readBody(req *http.Request) ([]byte, error) {
+	bodyReader := req.Body
+	defer bodyReader.Close()
+
+	body, err := io.ReadAll(bodyReader)
+	if err != nil {
+		return nil, err
+	}
+
+	return body, nil
 }
