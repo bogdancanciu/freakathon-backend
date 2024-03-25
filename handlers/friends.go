@@ -7,12 +7,14 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/models"
 	"golang.org/x/exp/slices"
+	"log"
 	"net/http"
 )
 
 type Friend struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID     string `json:"id"`
+	Name   string `json:"name"`
+	ChatId string `json:"chat_id"`
 }
 
 func BindFriendsHooks(app core.App) {
@@ -24,7 +26,7 @@ func AddFriend(app core.App) func(e *core.ServeEvent) error {
 	return func(e *core.ServeEvent) error {
 		e.Router.POST("/api/friends/:friend_id", func(c echo.Context) error {
 			session := getSessionToken(c.Request())
-			userId, sessionErr := userIdFromSession(session)
+			userId, sessionErr := UserIdFromSession(session)
 			if sessionErr != nil {
 				return sessionErr
 			}
@@ -49,12 +51,19 @@ func AcceptFriend(app core.App) func(e *core.ServeEvent) error {
 	return func(e *core.ServeEvent) error {
 		e.Router.PUT("/api/friends/:friend_id", func(c echo.Context) error {
 			session := getSessionToken(c.Request())
-			userId, sessionErr := userIdFromSession(session)
+			userId, sessionErr := UserIdFromSession(session)
 			if sessionErr != nil {
 				return sessionErr
 			}
 
-			err := updateCurrentUserPendingList(app, c, userId)
+			friendId := c.PathParam("friend_id")
+			chatParticipants := []string{userId, friendId}
+			chatId, err := createChat(app, chatParticipants, "dm", "")
+			if err != nil {
+				log.Println("Error while creating friend chat", err)
+			}
+
+			err = updateCurrentUserPendingList(app, c, userId)
 			if err != nil {
 				return err
 			}
@@ -64,7 +73,7 @@ func AcceptFriend(app core.App) func(e *core.ServeEvent) error {
 				return err
 			}
 
-			err = addFriendToFriendList(app, c, userId)
+			err = addFriendToFriendList(app, c, userId, chatId)
 			if err != nil {
 				return err
 			}
@@ -189,7 +198,7 @@ func updateFriendSentInvites(app core.App, c echo.Context, userId string) *apis.
 	return nil
 }
 
-func addFriendToFriendList(app core.App, c echo.Context, userId string) *apis.ApiError {
+func addFriendToFriendList(app core.App, c echo.Context, userId, chatId string) *apis.ApiError {
 	friendId := c.PathParam("friend_id")
 
 	currentUserRecord, err := app.Dao().FindFirstRecordByData("friends", "user_id", userId)
@@ -222,10 +231,10 @@ func addFriendToFriendList(app core.App, c echo.Context, userId string) *apis.Ap
 		return apis.NewApiError(http.StatusInternalServerError, "Server error", "")
 	}
 
-	currentUserFriendList = append(currentUserFriendList, Friend{ID: friendId, Name: friendRecord.Get("name").(string)})
+	currentUserFriendList = append(currentUserFriendList, Friend{ID: friendId, Name: friendRecord.Get("name").(string), ChatId: chatId})
 	currentUserRecord.Set("friend_list", currentUserFriendList)
 
-	peerFriendList = append(peerFriendList, Friend{ID: userId, Name: currentUser.Get("name").(string)})
+	peerFriendList = append(peerFriendList, Friend{ID: userId, Name: currentUser.Get("name").(string), ChatId: chatId})
 	friendUserRecord.Set("friend_list", peerFriendList)
 
 	if err := app.Dao().SaveRecord(currentUserRecord); err != nil {

@@ -9,7 +9,7 @@ import (
 func BindEventsHooks(app core.App) {
 	app.OnRecordBeforeCreateRequest("events").Add(func(e *core.RecordCreateEvent) error {
 		sessionToken := getSessionToken(e.HttpContext.Request())
-		userId, err := userIdFromSession(sessionToken)
+		userId, err := UserIdFromSession(sessionToken)
 		if err != nil {
 			return err
 		}
