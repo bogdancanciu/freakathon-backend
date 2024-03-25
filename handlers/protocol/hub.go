@@ -48,6 +48,11 @@ func (h *Hub) Run() {
 			for _, message := range pendingMessages {
 				h.clients[client.ID()].send <- message
 			}
+
+			messageRecord.Set("messages", [][]byte{})
+			if err := h.app.Dao().SaveRecord(messageRecord); err != nil {
+				log.Println("Failed to remove pending messages", err)
+			}
 		case client := <-h.unregister:
 			if _, ok := h.clients[client.ID()]; ok {
 				delete(h.clients, client.ID())

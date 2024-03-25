@@ -43,7 +43,7 @@ func BindRegisterHooks(app core.App) {
 
 		messagesRecord.Set("user_id", e.Record.Id)
 		messagesRecord.Set("active_anon_chats", []string{})
-		messagesRecord.Set("messages", []byte{})
+		messagesRecord.Set("messages", [][]byte{})
 
 		if err := app.Dao().SaveRecord(messagesRecord); err != nil {
 			return apis.NewApiError(http.StatusInternalServerError, "Server error", "")
