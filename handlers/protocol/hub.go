@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/models"
+	"github.com/pocketbase/pocketbase/tools/types"
 	"log"
 )
 
@@ -32,18 +33,21 @@ func (h *Hub) Run() {
 		select {
 		case client := <-h.register:
 			h.clients[client.ID()] = client
-			//if _, ok := h.msgStore[client.id]; ok {
-			//	for _, msg := range h.msgStore[client.id] {
-			//		msgBytes, err := json.Marshal(msg)
-			//		if err != nil {
-			//			log.Println("error while serializing message", err)
-			//		}
-			//		if _, ok := h.clients[msg.Receiver]; ok {
-			//			h.clients[client.id].send <- msgBytes
-			//		}
-			//	}
-			//	h.msgStore[client.id] = []socketMessage{}
-			//}
+			messageRecord, err := h.app.Dao().FindFirstRecordByData("messages", "user_id", client.ID())
+			if err != nil {
+				log.Println("Error finding messages record", err)
+				continue
+			}
+
+			pendingMessages, err := h.getPendingMessages(messageRecord)
+			if err != nil {
+				log.Println("Failed to fetch pending messages", err)
+				continue
+			}
+
+			for _, message := range pendingMessages {
+				h.clients[client.ID()].send <- message
+			}
 		case client := <-h.unregister:
 			if _, ok := h.clients[client.ID()]; ok {
 				delete(h.clients, client.ID())
@@ -61,16 +65,33 @@ func (h *Hub) Run() {
 				if participant == message.Sender {
 					continue
 				}
+				msgBytes, err := h.marshalSocketMessage(message, chatRecord)
+				if err != nil {
+					log.Println("Failed to serialize socket message", err)
+					continue
+				}
+
 				if _, ok := h.clients[participant]; ok {
-					msgBytes, err := h.marshalSocketMessage(message, chatRecord)
+					h.clients[participant].send <- msgBytes
+				} else {
+					messageRecord, err := h.app.Dao().FindFirstRecordByData("messages", "user_id", participant)
 					if err != nil {
-						log.Println("Failed to serialize socket message", err)
+						log.Println("Error finding messages record", err)
 						continue
 					}
 
-					h.clients[participant].send <- msgBytes
-				} else {
-					//h.msgStore[message.Receiver] = append(h.msgStore[message.Receiver], message)
+					pendingMessages, err := h.getPendingMessages(messageRecord)
+					if err != nil {
+						log.Println("Failed to fetch pending messages", err)
+						continue
+					}
+
+					pendingMessages = append(pendingMessages, msgBytes)
+					messageRecord.Set("messages", pendingMessages)
+					if err := h.app.Dao().SaveRecord(messageRecord); err != nil {
+						log.Println("Failed to store pending message for offline user", err)
+						continue
+					}
 				}
 			}
 
@@ -93,6 +114,19 @@ func (h *Hub) marshalSocketMessage(message socketMessage, chatRecord *models.Rec
 	}
 
 	return msgBytes, nil
+}
+
+func (h *Hub) getPendingMessages(messageRecord *models.Record) ([][]byte, error) {
+	var messages [][]byte
+	pendingMessages := messageRecord.Get("messages").(types.JsonRaw)
+
+	err := json.Unmarshal(pendingMessages, &messages)
+	if err != nil {
+		log.Println("Failed to deserialize pending messages", err)
+		return nil, err
+	}
+
+	return messages, nil
 }
 
 func isDM(chatType string) bool {
