@@ -11,16 +11,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type sender struct {
-	senderId string
-	groupId  string
-}
-
-type storeMessage struct {
-	Sender  sender `json:"sender"`
-	Message string `json:"message"`
-}
-
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
@@ -43,13 +33,6 @@ func ServeWs(app core.App, hub *Hub, w http.ResponseWriter, r *http.Request) {
 		conn.Close()
 		return
 	}
-
-	//record, err := app.Dao().FindFirstRecordByData("messages", "user_id", "e4eymnms6hoyb69")
-	//if err != nil {
-	//	log.Println("error while finding rec")
-	//}
-	//
-	//log.Println(record.Get("messages"))
 
 	userId, err := handlers.UserIdFromSession(string(sessionToken))
 	if !errors.Is(err, (*apis.ApiError)(nil)) {
