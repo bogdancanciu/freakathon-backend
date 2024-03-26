@@ -3,18 +3,24 @@ package handlers
 import (
 	"database/sql"
 	"errors"
+	"fmt"
+	"github.com/bogdancanciu/frekathon-backend/strategy"
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/models"
+	"github.com/pocketbase/pocketbase/tools/types"
+	"golang.org/x/exp/rand"
+	"log"
 	"net/http"
+	"strings"
+	"time"
 )
 
-//type messagesRecord struct {
-//	ID                   string                  `db:"id" json:"id"`
-//	UserID               string                  `db:"user_id" json:"user_id"`
-//	ActiveAnonymousChats types.JsonArray[string] `db:"active_anon_chats" json:"active_anon_chats"`
-//}
+type chatFinderRec struct {
+	ID        string                  `db:"user_id" json:"user_id"`
+	Interests types.JsonArray[string] `db:"interests" json:"interests"`
+}
 
 type FindChatAvailable struct {
 	CanFindChat bool `json:"canFindChat"`
@@ -55,7 +61,7 @@ func FindChat(app core.App) func(e *core.ServeEvent) error {
 				return apis.NewApiError(http.StatusInternalServerError, "Server error", "")
 			}
 
-			return nil
+			return matchExistingUsers(app)
 		})
 		return nil
 	}
@@ -83,4 +89,77 @@ func CanFindChat(app core.App) func(e *core.ServeEvent) error {
 		})
 		return nil
 	}
+}
+
+func matchExistingUsers(app core.App) error {
+	var chatFinderRecords []chatFinderRec
+	err := app.Dao().DB().NewQuery("SELECT * FROM chat_finder").All(&chatFinderRecords)
+	if err != nil {
+		log.Println("Error fetching from chat_finder", err)
+		return nil
+	}
+
+	var chatUsers []*strategy.User
+	for _, record := range chatFinderRecords {
+		chatUsers = append(chatUsers, &strategy.User{
+			ID:        record.ID,
+			Interests: record.Interests,
+		})
+	}
+
+	matchingStrategy := strategy.NewMatchingStrategy(chatUsers)
+	matches, commonInterests := matchingStrategy.FindMatchingGroups()
+	if len(matches) > 0 {
+		var groupParticipatingUsers []string
+		for _, user := range matches[0] {
+			groupParticipatingUsers = append(groupParticipatingUsers, user.ID)
+		}
+
+		chatsCollection, err := app.Dao().FindCollectionByNameOrId("chats")
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Server error", "")
+		}
+
+		chatRecord := models.NewRecord(chatsCollection)
+
+		chatRecord.Set("participants", groupParticipatingUsers)
+		chatRecord.Set("type", "group")
+		chatRecord.Set("description", randomGroupDescription())
+		chatRecord.Set("common_interests", commonInterests[0])
+
+		if err := app.Dao().SaveRecord(chatRecord); err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Server error", "")
+		}
+
+		err = deleteUsersFromChatFinder(app, groupParticipatingUsers)
+		if err != nil {
+			log.Println("Failed to delete users from chat finder", err)
+			return apis.NewApiError(http.StatusInternalServerError, "Server error", "")
+		}
+	}
+
+	return nil
+}
+
+func randomGroupDescription() string {
+	descriptionsPool := []string{"In The Forest", "At The Store", "In The Mighty Jungle", "At The Bar"}
+	rand.Seed(uint64(time.Now().UnixNano()))
+
+	return descriptionsPool[rand.Int()%len(descriptionsPool)]
+}
+
+func deleteUsersFromChatFinder(app core.App, users []string) error {
+	var quotedUserIds []string
+	for _, id := range users {
+		quotedUserIds = append(quotedUserIds, fmt.Sprintf("'%s'", id))
+	}
+	userIdsStr := strings.Join(quotedUserIds, ",")
+	query := fmt.Sprintf("DELETE FROM chat_finder WHERE user_id IN (%s)", userIdsStr)
+
+	_, err := app.Dao().DB().NewQuery(query).Execute()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

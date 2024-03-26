@@ -37,6 +37,7 @@ func main() {
 	handlers.BindEventsHooks(app)
 	handlers.BindFriendsHooks(app)
 	handlers.BindInterestsHooks(app)
+	handlers.BindChatFinderHooks(app)
 
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
