@@ -50,6 +50,20 @@ func BindRegisterHooks(app core.App) {
 			return apis.NewApiError(http.StatusInternalServerError, "Server error", "")
 		}
 
+		attendingEventsCollection, err := app.Dao().FindCollectionByNameOrId("attending_events")
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Server error", "")
+		}
+
+		attendingEventsRecord := models.NewRecord(attendingEventsCollection)
+
+		attendingEventsRecord.Set("user_id", e.Record.Id)
+		attendingEventsRecord.Set("attending_events", []string{})
+
+		if err := app.Dao().SaveRecord(attendingEventsRecord); err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Server error", "")
+		}
+
 		return nil
 
 	})
