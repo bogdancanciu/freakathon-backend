@@ -23,6 +23,8 @@ type eventRecord struct {
 	Title           string                  `db:"name" json:"title"`
 	Location        string                  `db:"location" json:"location"`
 	Date            string                  `db:"date" json:"date"`
+	Description     string                  `db:"description" json:"description"`
+	Emoji           string                  `db:"emoji" json:"emoji"`
 	Attendants      types.JsonArray[string] `db:"attendants" json:"attendants"`
 	AttendantsCount int                     `json:"attendants_count"`
 	CanAttend       bool                    `json:"can_attend"`
