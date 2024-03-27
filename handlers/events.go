@@ -58,6 +58,24 @@ func AttendEvent(app core.App) func(e *core.ServeEvent) error {
 				return apis.NewApiError(http.StatusInternalServerError, "Server error", "")
 			}
 
+			attendingEventsRecord, err := app.Dao().FindFirstRecordByData("attending_events", "user_id", userId)
+			if err != nil {
+				return apis.NewApiError(http.StatusInternalServerError, "Server error", "")
+			}
+
+			var attendingEvents []string
+			attending := attendingEventsRecord.Get("attending_events").(types.JsonRaw)
+			err = json.Unmarshal(attending, &attendingEvents)
+			if err != nil {
+				return apis.NewApiError(http.StatusInternalServerError, "Server error", "")
+			}
+
+			attendingEvents = append(attendingEvents, eventId)
+			attendingEventsRecord.Set("attending_events", attendantsSlice)
+			if err := app.Dao().SaveRecord(attendingEventsRecord); err != nil {
+				return apis.NewApiError(http.StatusInternalServerError, "Server error", "")
+			}
+
 			return c.NoContent(http.StatusOK)
 		})
 		return nil
