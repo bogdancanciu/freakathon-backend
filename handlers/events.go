@@ -14,7 +14,10 @@ func BindEventsHooks(app core.App) {
 			return err
 		}
 
+		attendants := []string{userId}
+
 		e.Record.Set("user_id", userId)
+		e.Record.Set("attendants", attendants)
 		if err := app.Dao().SaveRecord(e.Record); err != nil {
 			return apis.NewApiError(http.StatusInternalServerError, "Failed to create event.", "")
 		}
