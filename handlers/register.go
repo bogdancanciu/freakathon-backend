@@ -15,6 +15,7 @@ import (
 func BindRegisterHooks(app core.App) {
 	app.OnRecordAfterCreateRequest("users").Add(func(e *core.RecordCreateEvent) error {
 		setNewTag(e.Record)
+		initializeInterests(e.Record)
 		if err := app.Dao().SaveRecord(e.Record); err != nil {
 			return err
 		}
@@ -56,6 +57,10 @@ func BindRegisterHooks(app core.App) {
 
 func setNewTag(r *models.Record) {
 	r.Set("tag", generateUniqueTag(generateSillyName()))
+}
+
+func initializeInterests(r *models.Record) {
+	r.Set("interests", []string{})
 }
 
 func generateSillyName() string {
