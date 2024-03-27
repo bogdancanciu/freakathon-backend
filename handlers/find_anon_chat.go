@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/bogdancanciu/frekathon-backend/strategy"
@@ -136,6 +137,12 @@ func matchExistingUsers(app core.App) error {
 			log.Println("Failed to delete users from chat finder", err)
 			return apis.NewApiError(http.StatusInternalServerError, "Server error", "")
 		}
+
+		err = updateUsersActiveChats(app, groupParticipatingUsers, chatRecord)
+		if err != nil {
+			log.Println("Failed to delete users from chat finder", err)
+			return apis.NewApiError(http.StatusInternalServerError, "Server error", "")
+		}
 	}
 
 	return nil
@@ -159,6 +166,31 @@ func deleteUsersFromChatFinder(app core.App, users []string) error {
 	_, err := app.Dao().DB().NewQuery(query).Execute()
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func updateUsersActiveChats(app core.App, users []string, chatRecord *models.Record) error {
+	for _, user := range users {
+		messagesRecord, err := app.Dao().FindFirstRecordByData("messages", "user_id", user)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Server error", "")
+		}
+
+		var activeChats []string
+		chats := messagesRecord.Get("active_anon_chats").(types.JsonRaw)
+		err = json.Unmarshal(chats, &activeChats)
+		if err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Server error", "")
+		}
+
+		activeChats = append(activeChats, chatRecord.Id)
+		messagesRecord.Set("active_anon_chats", activeChats)
+		if err := app.Dao().SaveRecord(messagesRecord); err != nil {
+			return apis.NewApiError(http.StatusInternalServerError, "Server error", "")
+		}
+
 	}
 
 	return nil
